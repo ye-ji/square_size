@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Image Square Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+        .canvas-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiple Image Square Converter</h1>
+    <input type="file" id="imageInput" accept="image/*" multiple>
+    <div class="canvas-container" id="canvasContainer"></div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        imageInput.addEventListener('change', function(event) {
+            const files = event.target.files; // 여러 이미지 파일 가져오기
+
+            // 이전에 생성된 캔버스들 삭제
+            canvasContainer.innerHTML = '';
+
+            Array.from(files).forEach(file => {
+                const img = new Image();
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                }
+
+                img.onload = function() {
+                    // 원본 이미지 크기
+                    const originalWidth = img.width;
+                    const originalHeight = img.height;
+
+                    // 정사각형 크기 계산 (큰 쪽 기준으로 맞춤)
+                    const squareSize = Math.max(originalWidth, originalHeight);
+
+                    // 캔버스 생성
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = squareSize;
+                    canvas.height = squareSize;
+
+                    // 배경을 흰색으로 설정
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(0, 0, squareSize, squareSize);
+
+                    // 이미지를 캔버스 중앙에 맞추어 그리기
+                    const xOffset = (squareSize - originalWidth) / 2;
+                    const yOffset = (squareSize - originalHeight) / 2;
+                    ctx.drawImage(img, xOffset, yOffset);
+
+                    // 캔버스를 DOM에 추가
+                    canvasContainer.appendChild(canvas);
+                }
+
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+</body>
+</html>
