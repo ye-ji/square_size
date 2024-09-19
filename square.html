@@ -24,10 +24,27 @@
             border: 1px solid #ddd;
             margin: 10px;
         }
+        .radio-container {
+            margin-bottom: 20px;
+        }
+        .radio-container label {
+            margin-right: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Multiple Image Square Converter</h1>
+
+    <!-- 배경색 선택 (라디오 버튼) -->
+    <div class="radio-container">
+        <label>
+            <input type="radio" name="bgColor" value="white" checked> White Background
+        </label>
+        <label>
+            <input type="radio" name="bgColor" value="black"> Black Background
+        </label>
+    </div>
+
     <input type="file" id="imageInput" accept="image/*" multiple>
     <div class="canvas-container" id="canvasContainer"></div>
 
@@ -37,6 +54,7 @@
 
         imageInput.addEventListener('change', function(event) {
             const files = event.target.files; // 여러 이미지 파일 가져오기
+            const bgColor = document.querySelector('input[name="bgColor"]:checked').value; // 선택한 배경색
 
             // 이전에 생성된 캔버스들 삭제
             canvasContainer.innerHTML = '';
@@ -63,8 +81,8 @@
                     canvas.width = squareSize;
                     canvas.height = squareSize;
 
-                    // 배경을 흰색으로 설정
-                    ctx.fillStyle = "white";
+                    // 선택한 배경색으로 설정
+                    ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, squareSize, squareSize);
 
                     // 이미지를 캔버스 중앙에 맞추어 그리기
@@ -77,6 +95,16 @@
                 }
 
                 reader.readAsDataURL(file);
+            });
+        });
+
+        // 배경색 변경 시 이벤트 처리 (이미지 선택 전에 배경색을 선택할 수 있음)
+        document.querySelectorAll('input[name="bgColor"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // 이미지 파일이 이미 선택된 후 배경색을 바꿀 수 있도록 처리
+                if (imageInput.files.length > 0) {
+                    imageInput.dispatchEvent(new Event('change'));
+                }
             });
         });
     </script>
