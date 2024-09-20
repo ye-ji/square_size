@@ -25,6 +25,7 @@
             margin: 10px;
             max-width: 100%; /* 반응형 적용 */
             height: auto;
+            cursor: pointer; /* 클릭할 수 있도록 커서 변경 */
         }
         .color-selector {
             margin-bottom: 20px;
@@ -45,14 +46,11 @@
     </div>
 
     <input type="file" id="imageInput" accept="image/*" multiple>
-    <button id="downloadBtn">Save Images</button>
     <div class="canvas-container" id="canvasContainer"></div>
 
     <script>
         const imageInput = document.getElementById('imageInput');
         const canvasContainer = document.getElementById('canvasContainer');
-        const downloadBtn = document.getElementById('downloadBtn');
-        let originalCanvases = [];
 
         // 배경색 선택 함수
         function getSelectedBgColor() {
@@ -64,7 +62,6 @@
 
             // 이전에 생성된 캔버스들 삭제
             canvasContainer.innerHTML = '';
-            originalCanvases = [];
 
             Array.from(files).forEach(file => {
                 const img = new Image();
@@ -114,21 +111,16 @@
                     // 화면에 표시할 캔버스를 DOM에 추가
                     canvasContainer.appendChild(displayCanvas);
 
-                    // 원본 캔버스를 저장용 배열에 추가
-                    originalCanvases.push(originalCanvas);
+                    // 캔버스 클릭 시 이미지 저장 기능 추가
+                    displayCanvas.addEventListener('click', function() {
+                        const link = document.createElement('a');
+                        link.href = originalCanvas.toDataURL(); // 원본 크기의 이미지 데이터
+                        link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
+                        link.click();
+                    });
                 }
 
                 reader.readAsDataURL(file);
-            });
-        });
-
-        downloadBtn.addEventListener('click', function() {
-            originalCanvases.forEach((canvas, index) => {
-                // 이미지 다운로드 링크 생성
-                const link = document.createElement('a');
-                link.download = `image_${index + 1}.png`; // 저장할 파일명
-                link.href = canvas.toDataURL(); // 원본 크기의 이미지 데이터
-                link.click();
             });
         });
     </script>
