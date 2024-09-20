@@ -19,12 +19,15 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100vw; /* 화면 너비에 맞춤 */
+            height: 90vh; /* 화면 높이의 90%로 설정 */
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 가능하도록 설정 */
         }
         canvas {
             border: 1px solid #ddd;
             margin: 10px;
-            max-width: 100%; /* 반응형 적용 */
-            height: auto;
+            max-width: 100%; /* 최대 너비를 화면 너비로 조정 */
+            max-height: 100%; /* 최대 높이를 화면 높이로 조정 */
             cursor: pointer; /* 클릭할 수 있도록 커서 변경 */
         }
         .color-selector {
@@ -75,46 +78,57 @@
                     const originalWidth = img.width;
                     const originalHeight = img.height;
 
-                    // 화면용 캔버스와 원본 저장용 캔버스를 생성
+                    // 화면 크기 계산
                     const screenWidth = window.innerWidth;
-                    const squareSize = Math.min(Math.max(originalWidth, originalHeight), screenWidth); // 화면에 맞춘 크기
+                    const screenHeight = window.innerHeight;
+
+                    // 캔버스의 크기를 화면 크기에 맞게 조정
+                    const canvasWidth = Math.min(screenWidth, screenHeight);
+                    const canvasHeight = Math.min(screenWidth, screenHeight);
 
                     // 화면에 표시할 캔버스
                     const displayCanvas = document.createElement('canvas');
                     const displayCtx = displayCanvas.getContext('2d');
-                    displayCanvas.width = squareSize;
-                    displayCanvas.height = squareSize;
+                    displayCanvas.width = canvasWidth;
+                    displayCanvas.height = canvasHeight;
 
-                    // 저장용 캔버스 (원본 크기 유지)
+                    // 원본 크기의 캔버스 (저장용)
                     const originalCanvas = document.createElement('canvas');
                     const originalCtx = originalCanvas.getContext('2d');
-                    const originalSquareSize = Math.max(originalWidth, originalHeight);
-                    originalCanvas.width = originalSquareSize;
-                    originalCanvas.height = originalSquareSize;
 
                     // 선택된 배경색 적용
                     const bgColor = getSelectedBgColor();
                     displayCtx.fillStyle = bgColor;
-                    displayCtx.fillRect(0, 0, squareSize, squareSize);
+                    displayCtx.fillRect(0, 0, canvasWidth, canvasHeight);
                     originalCtx.fillStyle = bgColor;
-                    originalCtx.fillRect(0, 0, originalSquareSize, originalSquareSize);
+                    originalCtx.fillRect(0, 0, originalWidth, originalHeight);
 
-                    // 이미지를 화면과 원본 크기에 맞게 그리기
-                    const xOffsetDisplay = (squareSize - originalWidth) / 2;
-                    const yOffsetDisplay = (squareSize - originalHeight) / 2;
-                    displayCtx.drawImage(img, xOffsetDisplay, yOffsetDisplay);
+                    // 이미지 비율 조정
+                    const scale = Math.min(canvasWidth / originalWidth, canvasHeight / originalHeight);
+                    const scaledWidth = originalWidth * scale;
+                    const scaledHeight = originalHeight * scale;
+                    const xOffset = (canvasWidth - scaledWidth) / 2;
+                    const yOffset = (canvasHeight - scaledHeight) / 2;
 
-                    const xOffsetOriginal = (originalSquareSize - originalWidth) / 2;
-                    const yOffsetOriginal = (originalSquareSize - originalHeight) / 2;
-                    originalCtx.drawImage(img, xOffsetOriginal, yOffsetOriginal);
+                    // 화면에 표시할 캔버스에 이미지 그리기
+                    displayCtx.drawImage(img, xOffset, yOffset, scaledWidth, scaledHeight);
 
-                    // 화면에 표시할 캔버스를 DOM에 추가
+                    // 저장할 캔버스 크기 조정
+                    const maxWidth = 1000; // 최대 너비
+                    const maxHeight = (originalHeight / originalWidth) * maxWidth; // 비율 유지
+                    originalCanvas.width = Math.min(originalWidth, maxWidth);
+                    originalCanvas.height = Math.min(originalHeight, maxHeight);
+
+                    // 원본 크기의 캔버스에 이미지 그리기
+                    originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
+
+                    // 캔버스를 DOM에 추가
                     canvasContainer.appendChild(displayCanvas);
 
                     // 캔버스 클릭 시 이미지 저장 기능 추가
                     displayCanvas.addEventListener('click', function() {
                         const link = document.createElement('a');
-                        link.href = originalCanvas.toDataURL(); // 원본 크기의 이미지 데이터
+                        link.href = originalCanvas.toDataURL(); // 크기 제한된 이미지 데이터
                         link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
                         link.click();
                     });
