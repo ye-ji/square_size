@@ -122,12 +122,12 @@
                     displayImg.alt = 'Uploaded Image';
 
                     // 이미지 클릭 시 다운로드 기능 추가
-                    displayImg.addEventListener('click', function() {
-                        const link = document.createElement('a');
-                        link.href = imageDataURL;
-                        link.download = `image_${Date.now()}.jpg`; // 파일명에 타임스탬프 추가
-                        link.click();
-                    });
+                    // displayImg.addEventListener('click', function() {
+                    //     const link = document.createElement('a');
+                    //     link.href = imageDataURL;
+                    //     link.download = `image_${Date.now()}.jpg`; // 파일명에 타임스탬프 추가
+                    //     link.click();
+                    // });
 
                     // 이미지 표시
                     canvasContainer.appendChild(displayImg);
