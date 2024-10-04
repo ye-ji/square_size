@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Image Square Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+        .canvas-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100vw; /* 화면 너비에 맞춤 */
+            /*height: 90vh; /* 화면 높이의 90%로 설정 */ 
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 가능하도록 설정 */
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            max-width: 100%; /* 최대 너비를 화면 너비로 조정 */
+            max-height: 100%; /* 최대 높이를 화면 높이로 조정 */
+            cursor: pointer; /* 클릭할 수 있도록 커서 변경 */
+        }
+        .color-selector {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiple Image Square Converter</h1>
+
+    <!-- 배경색 선택 라디오 버튼 -->
+    <div class="color-selector">
+        <label>
+            <input type="radio" name="bgColor" value="white" checked> White
+        </label>
+        <label>
+            <input type="radio" name="bgColor" value="black"> Black
+        </label>
+    </div>
+
+    <input type="file" id="imageInput" accept="image/*" multiple>
+    <div class="canvas-container" id="canvasContainer"></div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // 배경색 선택 함수
+        function getSelectedBgColor() {
+            return document.querySelector('input[name="bgColor"]:checked').value;
+        }
+
+        imageInput.addEventListener('change', function(event) {
+            const files = event.target.files;
+
+            // 이전에 생성된 캔버스들 삭제
+            canvasContainer.innerHTML = '';
+
+            Array.from(files).forEach(file => {
+                const img = new Image();
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    img.src = e.target.result;
+                }
+
+                img.onload = function() {
+                    const originalWidth = img.width;
+                    const originalHeight = img.height;
+
+                    // 화면 크기 계산
+                    const screenWidth = window.innerWidth;
+                    const screenHeight = window.innerHeight;
+
+                    // 캔버스의 크기를 화면 크기에 맞게 조정
+                    const canvasWidth = Math.min(screenWidth, screenHeight);
+                    const canvasHeight = Math.min(screenWidth, screenHeight);
+
+                    // 화면에 표시할 캔버스
+                    const displayCanvas = document.createElement('canvas');
+                    const displayCtx = displayCanvas.getContext('2d');
+                    displayCanvas.width = canvasWidth;
+                    displayCanvas.height = canvasHeight;
+
+                    // 원본 크기의 캔버스 (저장용)
+                    const originalCanvas = document.createElement('canvas');
+                    const originalCtx = originalCanvas.getContext('2d');
+
+                    // 선택된 배경색 적용
+                    const bgColor = getSelectedBgColor();
+                    displayCtx.fillStyle = bgColor;
+                    displayCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+                    originalCtx.fillStyle = bgColor;
+                    originalCtx.fillRect(0, 0, originalWidth, originalHeight);
+
+                    // 이미지 비율 조정
+                    const scale = Math.min(canvasWidth / originalWidth, canvasHeight / originalHeight);
+                    const scaledWidth = originalWidth * scale;
+                    const scaledHeight = originalHeight * scale;
+                    const xOffset = (canvasWidth - scaledWidth) / 2;
+                    const yOffset = (canvasHeight - scaledHeight) / 2;
+
+                    // 화면에 표시할 캔버스에 이미지 그리기
+                    displayCtx.drawImage(img, xOffset, yOffset, scaledWidth, scaledHeight);
+
+                    // 저장할 캔버스 크기 조정
+                    const maxWidth = 1000; // 최대 너비
+                    const maxHeight = (originalHeight / originalWidth) * maxWidth; // 비율 유지
+                    originalCanvas.width = Math.min(originalWidth, maxWidth);
+                    originalCanvas.height = Math.min(originalHeight, maxHeight);
+
+                    // 원본 크기의 캔버스에 이미지 그리기
+                    originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
+
+                    // 캔버스를 DOM에 추가
+                    canvasContainer.appendChild(displayCanvas);
+
+                    // 캔버스 클릭 시 이미지 저장 기능 추가
+                    displayCanvas.addEventListener('click', function() {
+                        const link = document.createElement('a');
+                        link.href = originalCanvas.toDataURL(); // 크기 제한된 이미지 데이터
+                        link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
+                        link.click();
+                    });
+                }
+
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+</body>
+</html>
