@@ -83,11 +83,8 @@
                     const originalWidth = img.width;
                     const originalHeight = img.height;
 
-                    // 캔버스를 정사각형으로 만들기 위해 최대 크기를 결정
-                    const maxSize = Math.max(originalWidth, originalHeight);
-
                     // 큰 이미지를 처리할 때 크기를 줄이는 작업
-                    const maxImageSize = 1000; // 최대 이미지 크기
+                    const maxImageSize = 800; // 더 작은 크기 (800px)로 축소
                     let resizeWidth = originalWidth;
                     let resizeHeight = originalHeight;
 
@@ -102,9 +99,10 @@
                         }
                     }
 
-                    // 캔버스 생성 및 크기 조정
+                    // 캔버스 생성 및 크기 조정 (정사각형)
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
+                    const maxSize = Math.max(resizeWidth, resizeHeight); // 정사각형 크기 결정
                     canvas.width = maxSize;
                     canvas.height = maxSize;
 
@@ -113,7 +111,7 @@
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, maxSize, maxSize); // 캔버스를 배경색으로 채움
 
-                    // 이미지 비율에 맞게 크기 조정
+                    // 이미지 비율에 맞게 크기 조정하여 정사각형 가운데 배치
                     const scale = Math.min(maxSize / resizeWidth, maxSize / resizeHeight);
                     const scaledWidth = resizeWidth * scale;
                     const scaledHeight = resizeHeight * scale;
@@ -123,8 +121,8 @@
                     // 이미지 그리기 (배경색 위에)
                     ctx.drawImage(img, xOffset, yOffset, scaledWidth, scaledHeight);
 
-                    // 압축된 Data URL 생성 (품질 설정을 통한 압축)
-                    const imageDataURL = canvas.toDataURL('image/jpeg', 0.8); // JPEG 포맷으로 압축(0.8 품질)
+                    // PNG 형식으로 저장하여 메모리 사용 최소화 (Safari에서 안정적)
+                    const imageDataURL = canvas.toDataURL('image/png'); // PNG 포맷 사용
 
                     // 화면에 표시할 <img> 태그 생성
                     const displayImg = document.createElement('img');
@@ -135,7 +133,7 @@
                     // displayImg.addEventListener('click', function() {
                     //     const link = document.createElement('a');
                     //     link.href = imageDataURL;
-                    //     link.download = `image_${Date.now()}.jpg`; // 파일명에 타임스탬프 추가
+                    //     link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
                     //     link.click();
                     // });
 
