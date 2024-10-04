@@ -19,15 +19,18 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            width: 100vw;
-            overflow: auto;
+            width: 100vw; /* 화면 너비에 맞춤 */
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 가능하도록 설정 */
         }
         canvas {
             border: 1px solid #ddd;
             margin: 10px;
-            max-width: 100%; /* 화면 크기에 맞게 축소 */
-            max-height: 100%;
-            cursor: pointer;
+            max-width: 100%; /* 최대 너비를 화면 너비로 조정 */
+            max-height: 100%; /* 최대 높이를 화면 높이로 조정 */
+            cursor: pointer; /* 클릭할 수 있도록 커서 변경 */
+        }
+        .hidden {
+            display: none; /* 원본 이미지를 숨기기 위한 클래스 */
         }
         .color-selector {
             margin-bottom: 20px;
@@ -49,10 +52,12 @@
 
     <input type="file" id="imageInput" accept="image/*" multiple>
     <div class="canvas-container" id="canvasContainer"></div>
+    <div id="hiddenImages" class="hidden"></div> <!-- 원본 이미지를 숨겨두는 영역 -->
 
     <script>
         const imageInput = document.getElementById('imageInput');
         const canvasContainer = document.getElementById('canvasContainer');
+        const hiddenImages = document.getElementById('hiddenImages');
 
         // 배경색 선택 함수
         function getSelectedBgColor() {
@@ -64,6 +69,7 @@
 
             // 이전에 생성된 캔버스들 삭제
             canvasContainer.innerHTML = '';
+            hiddenImages.innerHTML = ''; // 이전 원본 이미지를 숨겨둔 영역도 초기화
 
             Array.from(files).forEach(file => {
                 const img = new Image();
@@ -77,40 +83,57 @@
                     const originalWidth = img.width;
                     const originalHeight = img.height;
 
-                    // 캔버스를 정사각형으로 만들기 위해 최대 크기를 결정
-                    const maxSize = Math.max(originalWidth, originalHeight);
+                    // 캔버스의 크기를 화면 크기에 맞게 조정
+                    const screenWidth = window.innerWidth;
+                    const screenHeight = window.innerHeight;
 
-                    // 화면에 보일 캔버스 (축소된 이미지)
+                    // 캔버스의 크기를 화면 크기에 맞게 축소 (정사각형 형태로 유지)
+                    const canvasSize = Math.min(screenWidth, screenHeight);
+
+                    // 화면에 표시할 축소된 캔버스
                     const displayCanvas = document.createElement('canvas');
                     const displayCtx = displayCanvas.getContext('2d');
-                    displayCanvas.width = maxSize;
-                    displayCanvas.height = maxSize;
+                    displayCanvas.width = canvasSize;
+                    displayCanvas.height = canvasSize;
 
-                    // 배경색 적용
+                    // 선택된 배경색 적용
                     const bgColor = getSelectedBgColor();
                     displayCtx.fillStyle = bgColor;
-                    displayCtx.fillRect(0, 0, maxSize, maxSize);
+                    displayCtx.fillRect(0, 0, canvasSize, canvasSize);
 
-                    // 이미지 비율 조정하여 가운데에 배치
-                    const xOffset = (maxSize - originalWidth) / 2;
-                    const yOffset = (maxSize - originalHeight) / 2;
-                    displayCtx.drawImage(img, xOffset, yOffset, originalWidth, originalHeight);
+                    // 이미지 비율 조정
+                    const scale = Math.min(canvasSize / originalWidth, canvasSize / originalHeight);
+                    const scaledWidth = originalWidth * scale;
+                    const scaledHeight = originalHeight * scale;
+                    const xOffset = (canvasSize - scaledWidth) / 2;
+                    const yOffset = (canvasSize - scaledHeight) / 2;
 
-                    // 캔버스를 DOM에 추가 (보이는 부분)
+                    // 화면에 표시할 축소된 캔버스에 이미지 그리기
+                    displayCtx.drawImage(img, xOffset, yOffset, scaledWidth, scaledHeight);
+
+                    // 원본 크기의 캔버스 (저장용, 숨겨진 상태)
+                    const originalCanvas = document.createElement('canvas');
+                    const originalCtx = originalCanvas.getContext('2d');
+                    originalCanvas.width = originalWidth;
+                    originalCanvas.height = originalHeight;
+
+                    // 원본 캔버스에 이미지 그리기
+                    originalCtx.drawImage(img, 0, 0, originalWidth, originalHeight);
+
+                    // 숨겨진 영역에 원본 캔버스 추가
+                    hiddenImages.appendChild(originalCanvas);
+
+                    // 축소된 캔버스를 DOM에 추가 (보이는 부분)
                     canvasContainer.appendChild(displayCanvas);
 
-                    // 이미지 클릭 시 다운로드 기능 추가
+                    // 캔버스 클릭 시 이미지 원본 크기로 다운로드 기능 추가
                     displayCanvas.addEventListener('click', function() {
                         const link = document.createElement('a');
-                        link.href = displayCanvas.toDataURL(); // 캔버스 데이터를 Data URL로 변환
+                        link.href = originalCanvas.toDataURL(); // 원본 크기 이미지 데이터
                         link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
                         link.click();
                     });
                 }
-
-                reader.onerror = function() {
-                    alert('이미지를 로드하는 중 오류가 발생했습니다. 다른 파일을 사용해보세요.');
-                };
 
                 reader.readAsDataURL(file);
             });
