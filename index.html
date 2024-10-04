@@ -133,12 +133,12 @@
                     hiddenFrame.appendChild(originalCanvas);
 
                     // 캔버스 클릭 시 이미지 저장 기능 추가
-                    displayCanvas.addEventListener('click', function() {
-                        const link = document.createElement('a');
-                        link.href = originalCanvas.toDataURL(); // 원본 크기 이미지
-                        link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
-                        link.click();
-                    });
+                    // displayCanvas.addEventListener('click', function() {
+                    //     const link = document.createElement('a');
+                    //     link.href = originalCanvas.toDataURL(); // 원본 크기 이미지
+                    //     link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
+                    //     link.click();
+                    // });
                 }
 
                 reader.readAsDataURL(file);
