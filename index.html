@@ -86,29 +86,45 @@
                     // 캔버스를 정사각형으로 만들기 위해 최대 크기를 결정
                     const maxSize = Math.max(originalWidth, originalHeight);
 
-                    // 캔버스 생성 (정사각형)
+                    // 큰 이미지를 처리할 때 크기를 줄이는 작업
+                    const maxImageSize = 1000; // 최대 이미지 크기
+                    let resizeWidth = originalWidth;
+                    let resizeHeight = originalHeight;
+
+                    if (originalWidth > maxImageSize || originalHeight > maxImageSize) {
+                        const aspectRatio = originalWidth / originalHeight;
+                        if (originalWidth > originalHeight) {
+                            resizeWidth = maxImageSize;
+                            resizeHeight = maxImageSize / aspectRatio;
+                        } else {
+                            resizeHeight = maxImageSize;
+                            resizeWidth = maxImageSize * aspectRatio;
+                        }
+                    }
+
+                    // 캔버스 생성 및 크기 조정
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     canvas.width = maxSize;
                     canvas.height = maxSize;
 
-                    // 배경색 설정
+                    // 배경색 선택 및 설정
                     const bgColor = getSelectedBgColor();
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, maxSize, maxSize); // 캔버스를 배경색으로 채움
 
                     // 이미지 비율에 맞게 크기 조정
-                    const scale = Math.min(maxSize / originalWidth, maxSize / originalHeight);
-                    const scaledWidth = originalWidth * scale;
-                    const scaledHeight = originalHeight * scale;
+                    const scale = Math.min(maxSize / resizeWidth, maxSize / resizeHeight);
+                    const scaledWidth = resizeWidth * scale;
+                    const scaledHeight = resizeHeight * scale;
                     const xOffset = (maxSize - scaledWidth) / 2;
                     const yOffset = (maxSize - scaledHeight) / 2;
 
                     // 이미지 그리기 (배경색 위에)
                     ctx.drawImage(img, xOffset, yOffset, scaledWidth, scaledHeight);
 
-                    // Data URL로 이미지 생성
-                    const imageDataURL = canvas.toDataURL(); // 기본값으로 PNG 사용
+                    // 압축된 Data URL 생성 (품질 설정을 통한 압축)
+                    const imageDataURL = canvas.toDataURL('image/jpeg', 0.8); // JPEG 포맷으로 압축(0.8 품질)
 
                     // 화면에 표시할 <img> 태그 생성
                     const displayImg = document.createElement('img');
@@ -119,13 +135,17 @@
                     // displayImg.addEventListener('click', function() {
                     //     const link = document.createElement('a');
                     //     link.href = imageDataURL;
-                    //     link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
+                    //     link.download = `image_${Date.now()}.jpg`; // 파일명에 타임스탬프 추가
                     //     link.click();
                     // });
 
                     // 캔버스에 그린 이미지를 화면에 추가
                     canvasContainer.appendChild(displayImg);
                 }
+
+                reader.onerror = function() {
+                    alert('이미지를 불러오는 중 문제가 발생했습니다.');
+                };
 
                 reader.readAsDataURL(file);
             });
