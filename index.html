@@ -25,9 +25,12 @@
         canvas {
             border: 1px solid #ddd;
             margin: 10px;
-            max-width: 100%;
+            max-width: 100%; /* 화면 크기에 맞게 축소 */
             max-height: 100%;
             cursor: pointer;
+        }
+        .hidden-frame {
+            display: none; /* 원본 이미지를 보이지 않게 */
         }
         .color-selector {
             margin-bottom: 20px;
@@ -49,10 +52,12 @@
 
     <input type="file" id="imageInput" accept="image/*" multiple>
     <div class="canvas-container" id="canvasContainer"></div>
+    <div class="hidden-frame" id="hiddenFrame"></div> <!-- 보이지 않는 프레임 -->
 
     <script>
         const imageInput = document.getElementById('imageInput');
         const canvasContainer = document.getElementById('canvasContainer');
+        const hiddenFrame = document.getElementById('hiddenFrame');
 
         // 배경색 선택 함수
         function getSelectedBgColor() {
@@ -64,6 +69,7 @@
 
             // 이전에 생성된 캔버스들 삭제
             canvasContainer.innerHTML = '';
+            hiddenFrame.innerHTML = ''; // 보이지 않는 프레임 초기화
 
             Array.from(files).forEach(file => {
                 const img = new Image();
@@ -80,7 +86,7 @@
                     // 캔버스를 정사각형으로 만들기 위해 최대 크기를 결정
                     const maxSize = Math.max(originalWidth, originalHeight);
 
-                    // 원본 크기의 정사각형 캔버스 (저장용)
+                    // 원본 크기의 정사각형 캔버스 (저장용, 보이지 않음)
                     const originalCanvas = document.createElement('canvas');
                     const originalCtx = originalCanvas.getContext('2d');
                     originalCanvas.width = maxSize;
@@ -96,23 +102,40 @@
                     const yOffset = (maxSize - originalHeight) / 2;
                     originalCtx.drawImage(img, xOffset, yOffset, originalWidth, originalHeight);
 
-                    // 화면에 표시할 캔버스
+                    // 화면에 보이는 캔버스 (축소된 버전)
                     const displayCanvas = document.createElement('canvas');
                     const displayCtx = displayCanvas.getContext('2d');
-                    displayCanvas.width = maxSize;
-                    displayCanvas.height = maxSize;
 
+                    // 화면 크기에 맞게 축소된 크기 계산
+                    const canvasWidth = Math.min(window.innerWidth, window.innerHeight);
+                    const canvasHeight = canvasWidth; // 정사각형으로 유지
+                    displayCanvas.width = canvasWidth;
+                    displayCanvas.height = canvasHeight;
+
+                    // 선택된 배경색 적용
                     displayCtx.fillStyle = bgColor;
-                    displayCtx.fillRect(0, 0, maxSize, maxSize);
-                    displayCtx.drawImage(img, xOffset, yOffset, originalWidth, originalHeight);
+                    displayCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-                    // 캔버스를 DOM에 추가
+                    // 축소된 이미지 비율 조정
+                    const scale = Math.min(canvasWidth / originalWidth, canvasHeight / originalHeight);
+                    const scaledWidth = originalWidth * scale;
+                    const scaledHeight = originalHeight * scale;
+                    const xOffsetScaled = (canvasWidth - scaledWidth) / 2;
+                    const yOffsetScaled = (canvasHeight - scaledHeight) / 2;
+
+                    // 축소된 캔버스에 이미지 그리기
+                    displayCtx.drawImage(img, xOffsetScaled, yOffsetScaled, scaledWidth, scaledHeight);
+
+                    // 축소된 캔버스를 DOM에 추가 (화면에 보이게)
                     canvasContainer.appendChild(displayCanvas);
+
+                    // 원본 캔버스를 보이지 않는 프레임에 추가 (저장용)
+                    hiddenFrame.appendChild(originalCanvas);
 
                     // 캔버스 클릭 시 이미지 저장 기능 추가
                     displayCanvas.addEventListener('click', function() {
                         const link = document.createElement('a');
-                        link.href = originalCanvas.toDataURL(); // 정사각형으로 변환된 이미지 데이터
+                        link.href = originalCanvas.toDataURL(); // 원본 크기 이미지
                         link.download = `image_${Date.now()}.png`; // 파일명에 타임스탬프 추가
                         link.click();
                     });
